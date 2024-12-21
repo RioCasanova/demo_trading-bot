@@ -1,0 +1,12 @@
+[package]
+name = "demo_trading_bot"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+reqwest = { version = "0.12.9", features = ["json"] }  # For API requests
+serde = { version = "1.0", features = ["derive"] }   # For JSON serialization
+tokio = { version = "1.0", features = ["full"] }     # For async runtime
+chrono = "0.4"                                       # For handling time
+rand = "0.8" 
+dotenv = "0.15"
