@@ -14,3 +14,4 @@ pub struct CoinGeckoMarketChart {
    pub market_caps: Vec<Vec<f64>>,
    pub total_volumes: Vec<Vec<f64>>,
 }
+
