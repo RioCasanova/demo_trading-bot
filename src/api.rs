@@ -1,5 +1,6 @@
 use crate::model;
 use reqwest::Error;
+use std::collections::HashMap;
 
 
 
@@ -9,18 +10,28 @@ pub async fn get_coin_price(coin_name: &str, api_key: &str) -> Result<f64, Strin
         coin_name, api_key
     );
 
-   // Send request to CoinGecko API
-    let response: model::CoinGeckoResponse = reqwest::get(&url)
+    let response = reqwest::get(&url)
         .await
-        .map_err(|e| format!("Failed to fetch data: {}", e))?  // Convert reqwest::Error to String
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?; // Convert JSON parsing error to String
+        .map_err(|e| format!("Failed to fetch data: {}", e))?;
 
-    // Try to get the coin price from the response
-    match coin_name {
-        "bitcoin" => Ok(response.bitcoin.usd), // Return the price if the coin is found
-        _ => Err(format!("Coin '{}' not found", coin_name)), // Handle coin not found
+    // Check if the request was successful
+    if response.status() != reqwest::StatusCode::OK {
+        return Err(format!("Request failed with status: {}", response.status()));
+    }
+
+    // Get the raw response body as a string for inspection
+    let body = response.text().await.map_err(|e| format!("Failed to read body: {}", e))?;
+    println!("Raw response: {}", body); // Print the raw JSON response for inspection
+
+    // Parse the JSON response into a HashMap with coin names as keys
+    let response_data: HashMap<String, model::CoinPrice> = serde_json::from_str(&body)
+        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+    // Dynamically check for the coin in the HashMap
+    if let Some(coin_price) = response_data.get(coin_name) {
+        Ok(coin_price.usd) // Return the price if found
+    } else {
+        Err(format!("Coin '{}' not found", coin_name)) // Handle coin not found
     }
 }
 

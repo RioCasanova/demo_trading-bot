@@ -1,15 +1,11 @@
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct CoinPrice {
     pub usd: f64,
+    
 }
 
-
-#[derive(Deserialize)]
-pub struct CoinGeckoResponse {
-    pub bitcoin: CoinPrice,
-}
 
 
 #[derive(Deserialize)]

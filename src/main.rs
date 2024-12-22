@@ -1,6 +1,7 @@
 mod api;
 mod model;
 mod utils;
+mod endpoint;
 
 use std::io;
 
