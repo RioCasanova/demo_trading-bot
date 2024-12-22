@@ -1,23 +1,30 @@
 mod api;
-use std::env;
-use dotenv::dotenv;
-use api::fetch_bitcoin_price;
-use tokio;
+mod model;
+mod utils;
+
+use std::io;
 
 #[tokio::main]
 async fn main() {
-    dotenv().ok();
 
-    let api_key = match env::var("COIN_GECKO_API_KEY") {
-        Ok(key) => key, // Successfully retrieved the API key
-        Err(e) => {
-            eprintln!("Failed to get the API key: {}", e); // Handle error
-            return; // Exit the program early
+    let mut user_coin_name = String::new();
+    let api_key = utils::get_api_key();
+    
+    println!("enter the name/id of a coin");
+    
+
+
+    match io::stdin().read_line(&mut user_coin_name) {
+        Ok(_) => {
+            let coin_name = user_coin_name.trim();
+            match api::get_coin_price(coin_name, &api_key).await {
+                Ok(price) => println!("The price of {} is USD: ${}", coin_name, price),
+                Err(e) => eprint!("Error fetching data {}", e),
+            }
         }
-    };
-
-    match fetch_bitcoin_price(&api_key).await {
-        Ok(price) => println!("Bitcoin price is USD: ${}", price),
-        Err(e) => eprintln!("Error fetching data: {}", e),
+        Err(e) => {
+            eprint!("Issue: {}", e);
+        }
     }
+
 }
