@@ -90,8 +90,8 @@ pub fn coin_info_endpoint(coin_id: &str) -> String {
 ]
 */
 
-pub fn coin_market_data_endpoint(coin_id: &str, currency: &str) -> String {
-    format!("{}coins/{}/markets?vs_currency={}", BASE_URL, coin_id, currency)
+pub fn coin_market_data_endpoint(coin_id: &str, api_key: &str) -> String {
+    format!("{}coins/{}/markets?vs_currency=usd&api_key={}", BASE_URL, coin_id, api_key)
 }
 
 

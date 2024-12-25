@@ -1,14 +1,11 @@
 use crate::model;
-use reqwest::Error;
+use crate::endpoint;
 use std::collections::HashMap;
 
 
 
 pub async fn get_coin_price(coin_name: &str, api_key: &str) -> Result<f64, String> {
-    let url = format!(
-        "https://api.coingecko.com/api/v3/simple/price?ids={}&vs_currencies=usd&api_key={}",
-        coin_name, api_key
-    );
+    let url = endpoint::coin_price_endpoint(coin_name, api_key);
 
     let response = reqwest::get(&url)
         .await
@@ -37,12 +34,37 @@ pub async fn get_coin_price(coin_name: &str, api_key: &str) -> Result<f64, Strin
 
 
 
-pub async fn get_coin_historical_data(api_key: &str) -> Result<model::CoinGeckoMarketChart, Error> {
-    let url = format!(
-        "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=7&api_key={}",
-        api_key
-    );
+pub async fn get_coin_historical_data(
+    coin_name: &str,
+    api_key: &str,
+) -> Result<model::CoinGeckoMarketData, String> {
+    // Build the URL for the API endpoint.
+    let url = endpoint::coin_market_data_endpoint(coin_name, api_key);
 
-    let response: model::CoinGeckoMarketChart = reqwest::get(&url).await?.json().await?;
-    Ok(response)
+    // Perform the HTTP GET request.
+    let response = reqwest::get(&url)
+        .await
+        .map_err(|e| format!("Failed to fetch data: {}", e))?;
+
+    // Ensure the request was successful (HTTP 200 OK).
+    if !response.status().is_success() {
+        return Err(format!("Request failed with status code: {}", response.status()));
+    }
+
+    // Read the response body as a string.
+    let body = response
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read response body: {}", e))?;
+    println!("Raw response: {}", body); // Print for debugging.
+
+    // Parse the response JSON into a HashMap.
+    let response_data: HashMap<String, model::CoinGeckoMarketData> = serde_json::from_str(&body)
+        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+    // Look for the coin data in the parsed HashMap.
+    response_data
+        .get(coin_name)
+        .cloned() // Cloned to move ownership out of the HashMap.
+        .ok_or_else(|| format!("Coin '{}' not found in API response", coin_name))
 }
